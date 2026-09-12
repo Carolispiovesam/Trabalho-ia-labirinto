@@ -22,32 +22,28 @@ def imprimir_metricas(nome_algoritmo, resultado):
     print("-" * 40)
 
 def main():
-    # Define o mapa carregado
+  # Define o mapa carregado
     caminho_mapa = "mapas/mapa_1_caixa.txt"
     print(f"Iniciando resolução do mapa: {caminho_mapa}")
 
-    # labirinto = problema.carregar_mapa(caminho_mapa)
-    labirinto = None # temporário
+    # Inicializa a classe do labirinto criada no problema.py
+    labirinto = problema.Problema(caminho_mapa)
 
-    # 1. Busca de Custo Uniforme (UCS)
-    # Para UCS, f(n) = g(n) - Olha apenas o custo já pago
+
+# 1. Busca de Custo Uniforme (UCS)
     print("\n[1/3] Executando Busca de Custo Uniforme (UCS)...")
-    # resultado_ucs = busca.busca_generica(labirinto, calcular_f=lambda no: no.g)
-    # imprimir_metricas("UCS", resultado_ucs)
-
+    resultado_ucs = busca.busca(labirinto, busca.f_ucs)
+    imprimir_metricas("UCS", resultado_ucs)
 
     # 2. Busca Gulosa
-    # Para Gulosa, f(n) = h(n) - Olha apenas a heurística.
     print("\n[2/3] Executando Busca Gulosa...")
-    # resultado_gulosa = busca.busca_generica(labirinto, calcular_f=lambda no: no.h)
-    # imprimir_metricas("Busca Gulosa", resultado_gulosa)
-
+    resultado_gulosa = busca.busca(labirinto, busca.f_gulosa)
+    imprimir_metricas("Busca Gulosa", resultado_gulosa)
 
     # 3. Busca A*
-    # Para A*, f(n) = g(n) + h(n) - Soma o custo real com a heurística.
     print("\n[3/3] Executando Busca A*...")
-    # resultado_astar = busca.busca_generica(labirinto, calcular_f=lambda no: no.g + no.h)
-    # imprimir_metricas("A*", resultado_astar)
+    resultado_astar = busca.busca(labirinto, busca.f_astar)
+    imprimir_metricas("A*", resultado_astar)
 
 if __name__ == '__main__':
     main()

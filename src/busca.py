@@ -48,7 +48,13 @@ def busca(problema, funcao_f, limite_tempo=60):
 
         if time.time() - inicio > limite_tempo:
             tempo_total = time.time() - inicio
-            return None, nos_expandidos, tempo_total
+            return {
+                "timeout": True, 
+                "custo": None, 
+                "passos": None, 
+                "nos_expandidos": nos_expandidos, 
+                "tempo": tempo_total
+            }
         
         # Retira o nó de maior prioridade da fronteira
         _, _, no_atual = heapq.heappop(fronteira)
@@ -58,7 +64,13 @@ def busca(problema, funcao_f, limite_tempo=60):
 
         if problema.eh_objetivo(no_atual.estado):
             tempo_total= time.time() - inicio
-            return no_atual, nos_expandidos, tempo_total
+            return {
+                "timeout": False,
+                "custo": no_atual.custo,
+                "passos": len(reconstruir_caminho(no_atual)),
+                "nos_expandidos": nos_expandidos,
+                "tempo": tempo_total
+            }
 
         nos_expandidos += 1
 
@@ -101,7 +113,14 @@ def busca(problema, funcao_f, limite_tempo=60):
                 contador += 1
 
     tempo_total = time.time() - inicio
-    return None, nos_expandidos, tempo_total
+    tempo_total = time.time() - inicio
+    return {
+        "timeout": False,
+        "custo": "Sem solução",
+        "passos": "-",
+        "nos_expandidos": nos_expandidos,
+        "tempo": tempo_total
+    }
 
 # Volta pelos nós pais até o estado inicial
 def reconstruir_caminho(no_final):
