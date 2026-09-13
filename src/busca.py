@@ -41,14 +41,14 @@ def busca(problema, funcao_f, limite_tempo=60):
     contador = 1
 
     # Variáveis usadas para medir tempo e quantidade de nós expandidos.
-    inicio = time.time()
+    inicio = time.perf_counter()
     nos_expandidos = 0
     ordem_de_expansao = []
 
     while fronteira:
 
-        if time.time() - inicio > limite_tempo:
-            tempo_total = time.time() - inicio
+        if time.perf_counter() - inicio > limite_tempo:
+            tempo_total = time.perf_counter() - inicio
             return {
                 "timeout": True, 
                 "custo": None, 
@@ -65,7 +65,7 @@ def busca(problema, funcao_f, limite_tempo=60):
             continue
 
         if problema.eh_objetivo(no_atual.estado):
-            tempo_total= time.time() - inicio
+            tempo_total = time.perf_counter() - inicio
             return {
                 "timeout": False,
                 "custo": no_atual.custo,
@@ -116,8 +116,7 @@ def busca(problema, funcao_f, limite_tempo=60):
 
                 contador += 1
 
-    tempo_total = time.time() - inicio
-    tempo_total = time.time() - inicio
+    tempo_total = time.perf_counter() - inicio
     return {
         "timeout": False,
         "custo": "Sem solução",
