@@ -1,11 +1,12 @@
-# -*- coding: utf-8 -*-
+
 import os
 import time
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 from pathlib import Path
 
-# Importa a classe do problema criada pelo grupo
+import busca
+
 try:
     from problema import Problema
 except ImportError:
@@ -14,55 +15,10 @@ except ImportError:
     except ImportError:
         Problema = None
 
-
-def busca_generica(problema, f_eval):
-    inicial = problema.estado_inicial
-    fronteira = [{'estado': inicial, 'pai': None, 'custo': 0, 'passos': 0}]
-    alcancados = {inicial: 0}
-    ja_expandidos = []
-
-    while fronteira:
-        idx_menor = 0
-        for i in range(1, len(fronteira)):
-            if f_eval(fronteira[i]) < f_eval(fronteira[idx_menor]):
-                idx_menor = i
-        no = fronteira.pop(idx_menor)
-
-        if problema.eh_objetivo(no['estado']):
-            caminho = []
-            curr = no
-            while curr:
-                caminho.append(curr['estado'])
-                curr = curr['pai']
-            caminho.reverse()
-            return {
-                'caminho': caminho,
-                'custo': no['custo'],
-                'passos': no['passos'],
-                'expandidos': len(ja_expandidos),
-                'ordem_de_expansao': ja_expandidos
-            }
-
-        ja_expandidos.append(no['estado'])
-
-        for acao in problema.acoes(no['estado']):
-            novo_est = problema.resultado(no['estado'], acao)
-            novo_custo = no['custo'] + 1
-            if novo_est not in alcancados or novo_custo < alcancados[novo_est]:
-                alcancados[novo_est] = novo_custo
-                fronteira.append({
-                    'estado': novo_est,
-                    'pai': no,
-                    'custo': novo_custo,
-                    'passos': no['passos'] + 1
-                })
-    return None
-
-
 class SokobanGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title("Sokoban - Interface de Visualizacao")
+        self.root.title("Sokoban - Interface de Visualização")
         self.root.geometry("1000x680")
         self.root.minsize(850, 580)
 
@@ -80,7 +36,6 @@ class SokobanGUI:
         main_frame = ttk.Frame(self.root, padding=10)
         main_frame.pack(fill=tk.BOTH, expand=True)
 
-        # Painel esquerdo: Canvas
         left_frame = ttk.Frame(main_frame)
         left_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 10))
 
@@ -89,7 +44,6 @@ class SokobanGUI:
         self.canvas = tk.Canvas(left_frame, bg="#ffffff", highlightthickness=1, highlightbackground="#cccccc")
         self.canvas.pack(fill=tk.BOTH, expand=True)
 
-        # Legenda simples
         legenda_frame = ttk.Frame(left_frame, padding=5)
         legenda_frame.pack(fill=tk.X, pady=(5, 0))
 
@@ -107,12 +61,10 @@ class SokobanGUI:
             lbl = ttk.Label(legenda_frame, text=texto, font=("Helvetica", 8))
             lbl.pack(side=tk.LEFT)
 
-        # Painel direito: Controles e Metricas
         right_frame = ttk.Frame(main_frame, width=300)
         right_frame.pack(side=tk.RIGHT, fill=tk.Y)
         right_frame.pack_propagate(False)
 
-        # Configuracoes
         grp_config = ttk.LabelFrame(right_frame, text=" Configuracoes ", padding=10)
         grp_config.pack(fill=tk.X, pady=(0, 10))
 
@@ -137,7 +89,6 @@ class SokobanGUI:
         btn_executar = ttk.Button(grp_config, text="Executar Busca", command=self._executar)
         btn_executar.pack(fill=tk.X)
 
-        # Metricas
         grp_met = ttk.LabelFrame(right_frame, text=" Metricas ", padding=10)
         grp_met.pack(fill=tk.X, pady=(0, 10))
 
@@ -160,7 +111,6 @@ class SokobanGUI:
         self.lbl_tempo = ttk.Label(grid_m, text="-", font=("Helvetica", 10, "bold"))
         self.lbl_tempo.grid(row=3, column=1, sticky=tk.E, padx=(10, 0))
 
-        # Controles de animacao
         grp_anim = ttk.LabelFrame(right_frame, text=" Controles de Animacao ", padding=10)
         grp_anim.pack(fill=tk.X, pady=(0, 10))
 
@@ -187,7 +137,6 @@ class SokobanGUI:
 
     def _carregar_mapa_padrao(self):
         nome_mapa = self.cb_mapas.get()
-        # Procura a pasta mapas no projeto
         base_path = Path(__file__).resolve().parent
         candidatos = [
             base_path / "mapas" / nome_mapa,
@@ -234,33 +183,33 @@ class SokobanGUI:
             return
 
         alg = self.cb_alg.get()
+        # Conectando com as funções de avaliação do busca.py
         if "UCS" in alg:
-            f = lambda n: n['custo']
+            f_eval = busca.f_ucs
         elif "Gulosa" in alg:
-            f = lambda n: self.problema.heuristica(n['estado'])
+            f_eval = busca.f_gulosa
         else:
-            f = lambda n: n['custo'] + self.problema.heuristica(n['estado'])
+            f_eval = busca.f_astar
 
         self.lbl_status.config(text="Executando busca...")
         self.root.update()
 
-        t0 = time.perfcounter()
-        res = busca_generica(self.problema, f)
-        t1 = time.perfcounter()
+        # Chamando a busca
+        res = busca.busca(self.problema, f_eval)
 
-        if res:
-            tempo_ms = (t1 - t0) * 1000
+        # Verificando as métricas devolvidas pelo dicionário
+        if res and res.get("timeout") == False and res.get("custo") != "Sem solução":
             self.resultado_busca = res
             self.passo_atual = 0
-            self.lbl_custo.config(text=str(res['custo']))
-            self.lbl_passos.config(text=str(res['passos']))
-            self.lbl_expandidos.config(text=str(res['expandidos']))
-            self.lbl_tempo.config(text=f"{tempo_ms:.2f}")
+            self.lbl_custo.config(text=str(res.get('custo')))
+            self.lbl_passos.config(text=str(res.get('passos')))
+            self.lbl_expandidos.config(text=str(res.get('nos_expandidos')))
+            self.lbl_tempo.config(text=f"{res.get('tempo')*1000:.2f}")
             self.lbl_status.config(text="Busca concluída com sucesso!")
             self._desenhar()
         else:
             self.lbl_status.config(text="Sem solução para este mapa.")
-            messagebox.showinfo("Resultado", "Não foi encontrada solução.")
+            messagebox.showinfo("Resultado", "Não foi encontrada solução ou estourou o limite de tempo.")
 
     def _desenhar(self):
         self.canvas.delete("all")
@@ -283,13 +232,11 @@ class SokobanGUI:
         off_x = (w - (cols * tam)) // 2
         off_y = (h - (rows * tam)) // 2
 
-        # Estado atual da animacao
         if self.resultado_busca and self.passo_atual < len(self.resultado_busca['caminho']):
             agente, caixas = self.resultado_busca['caminho'][self.passo_atual]
         else:
             agente, caixas = self.problema.estado_inicial
 
-        # Destacar nos expandidos
         nos_exp = set()
         if self.var_expandidos.get() and self.resultado_busca:
             for est in self.resultado_busca['ordem_de_expansao']:
