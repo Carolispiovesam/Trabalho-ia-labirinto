@@ -43,6 +43,7 @@ def busca(problema, funcao_f, limite_tempo=60):
     # Variáveis usadas para medir tempo e quantidade de nós expandidos.
     inicio = time.time()
     nos_expandidos = 0
+    ordem_de_expansao = []
 
     while fronteira:
 
@@ -58,6 +59,7 @@ def busca(problema, funcao_f, limite_tempo=60):
         
         # Retira o nó de maior prioridade da fronteira
         _, _, no_atual = heapq.heappop(fronteira)
+        ordem_de_expansao.append(no_atual.estado)
 
         if no_atual.custo > melhor_custo[no_atual.estado]:
             continue
@@ -69,7 +71,9 @@ def busca(problema, funcao_f, limite_tempo=60):
                 "custo": no_atual.custo,
                 "passos": len(reconstruir_caminho(no_atual)),
                 "nos_expandidos": nos_expandidos,
-                "tempo": tempo_total
+                "tempo": tempo_total,
+                "caminho": reconstruir_caminho_estados(no_atual), 
+                "ordem_de_expansao": ordem_de_expansao            
             }
 
         nos_expandidos += 1
@@ -144,3 +148,12 @@ def f_gulosa(g, h):
 
 def f_astar(g, h):
     return g + h
+
+def reconstruir_caminho_estados(no_final):
+    estados = []
+    no_atual = no_final
+    while no_atual is not None:
+        estados.append(no_atual.estado)
+        no_atual = no_atual.pai
+    estados.reverse()
+    return estados
