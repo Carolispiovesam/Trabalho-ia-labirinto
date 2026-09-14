@@ -4,7 +4,7 @@ Andrei Gustavo de Lima Macedo, Auricelia Lima Sousa, Caroline Balko Piovesam e P
 
 # REQUISITOS #
 
-- Python, versão 3.13.0;
+- Python, versão 3.10.0;
 - Tkinter disponível na instalação do Python;
 - Ambiente gráfico para exibir a interface.
 
